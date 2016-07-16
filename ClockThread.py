@@ -10,11 +10,12 @@ class ClockTread(Thread):
     def __init__(self):
         Thread.__init__(self)
         self._stopping = False
-        self._timezone = pytz.timezone('Europe/Berlin') # default timezone
-        self._alarm 
+        self._play_alarm = False  # currently playing an alarm
+        self._alarm_active = False  # activate alarm
+        self._timezone = pytz.timezone('Europe/Berlin')  # default timezone
+
         self.time_now = datetime.datetime.now(self.timezone)
-
-
+        self._alarm = datetime.datetime.now(self.timezone).replace(hour=8, minute=0)
 
     def get_current_datetime(self):
         return self.time_now
@@ -33,7 +34,9 @@ class ClockTread(Thread):
     @timezone.setter
     def timezone(self, zone):
         self._timezone = pytz.timezone(zone)
-        # may not be thread save ?self.time_now = pytz.timezone(self.timezone)
+
+# TODO set alarm
+# TODO get alarm
 
     # stop the thread execution, time will not be updated any longer
     def stop(self):
