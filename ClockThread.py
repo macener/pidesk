@@ -5,25 +5,28 @@ import time
 import datetime
 import pytz
 
+
 class ClockTread(Thread):
 
-    def __init__(self, timezone=pytz.timezone('Europe/Berlin')):
-        Thread.__init__(self)
+    def __init__(self, timezone="Europe/Berlin"):
+        Thread.__init__(self, name="Clock")
         self._stopping = False
         self._play_alarm = False  # currently playing an alarm
-        self._timezone = timezone  # default timezone
-        self.time_now = datetime.datetime.now(self.timezone)
+        self._timezone = pytz.timezone(timezone)  # default timezone
+        self.datetime_now = datetime.datetime.now(self.timezone)
         self.alarm_active = False  # activate alarm
-        self._alarm = datetime.datetime.now(self._timezone).replace(hour=8, minute=0)
+        self._alarm = datetime.datetime.now(self._timezone).replace(hour=8,
+                                                                    minute=0)
 
     def get_current_datetime(self):
-        return self.time_now
+        return self.datetime_now
 
     # return time in a feasible manner
     def get_time_str(self):
-        hour = self.time_now.hour
-        minute = self.time_now.minute
-        time_str = "{}{}{}{}".format(str(int(hour/10)), str(hour % 10), str(int(minute/10)), str(minute % 10))
+        hour = self.datetime_now.hour
+        minute = self.datetime_now.minute
+        time_str = "{}{}{}{}".format(str(int(hour/10)), str(hour % 10), 
+                                     str(int(minute/10)), str(minute % 10))
         return time_str
 
     @property
@@ -44,15 +47,19 @@ class ClockTread(Thread):
 
     # count clock
     def run(self):
+        # TODO stop thread
         while not self._stopping:
-            self.time_now = datetime.datetime.now(self.timezone)
+            self.datetime_now = datetime.datetime.now(self.timezone)
             time.sleep(1)
             print self.get_time_str()
 
 if __name__ == '__main__':
     clock = ClockTread()
     clock.start()
-    print clock.get_current_datetime()
-    print clock.get_time_str()
-    time.sleep(10)
+    time.sleep(1)
+    clock.timezone("Europe/London")
+    time.sleep(2)
+    # print clock.get_current_datetime()
+    # print clock.get_time_str()
+    #time.sleep(10)
     clock.stop()
