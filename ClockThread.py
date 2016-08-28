@@ -1,19 +1,21 @@
 #Clock Thread Controlling the time
 
-from threading import Thread
+import threading
 import time
 import datetime
 import pytz
 
 
-class ClockTread(Thread):
+class ClockTread(threading.Thread):
 
-    def __init__(self, timezone="Europe/Berlin"):
-        Thread.__init__(self, name="Clock")
+    def __init__(self, tz="Europe/Berlin"):
+        # threading.Thread.__init__(self, name="Clock")
+        super(ClockTread, self).__init__(name="Clock")
         self._stopping = False
         self._play_alarm = False  # currently playing an alarm
-        self._timezone = pytz.timezone(timezone)  # default timezone
-        self.datetime_now = datetime.datetime.now(self.timezone)
+        self._timezone = pytz.timezone(tz)  # default timezone
+        self.timezone_lock = threading.Lock()
+        self.datetime_now = datetime.datetime.now(self._timezone)
         self.alarm_active = False  # activate alarm
         self._alarm = datetime.datetime.now(self._timezone).replace(hour=8,
                                                                     minute=0)
@@ -31,11 +33,15 @@ class ClockTread(Thread):
 
     @property
     def timezone(self):
-        return self._timezone
+        with self.timezone_lock:
+            zone = self._timezone
+        return zone
 
     @timezone.setter
     def timezone(self, zone):
-        self._timezone = pytz.timezone(zone)
+        with self.timezone_lock:
+            self._timezone = pytz.timezone(zone)
+
 
 # TODO set alarm
 
@@ -47,19 +53,25 @@ class ClockTread(Thread):
 
     # count clock
     def run(self):
-        # TODO stop thread
         while not self._stopping:
-            self.datetime_now = datetime.datetime.now(self.timezone)
-            time.sleep(1)
-            print self.get_time_str()
+            with self.timezone_lock:
+                self.datetime_now = datetime.datetime.now(self._timezone)
+                print self.get_time_str()
+                # print self.datetime_now
+                time.sleep(1)
+
 
 if __name__ == '__main__':
     clock = ClockTread()
     clock.start()
     time.sleep(1)
-    clock.timezone("Europe/London")
-    time.sleep(2)
+    clock.timezone = "Europe/London"
+    time.sleep(1)
     # print clock.get_current_datetime()
     # print clock.get_time_str()
     #time.sleep(10)
+    print "Stopping clock"
     clock.stop()
+    print "Waiting for clock to terminate"
+    clock.join()
+    print "clock finished"
