@@ -13,20 +13,36 @@ class ClockTread(threading.Thread):
         super(ClockTread, self).__init__(name="Clock")
         self._stopping = False
         self._play_alarm = False  # currently playing an alarm
+
         self._timezone = pytz.timezone(tz)  # default timezone
         self.timezone_lock = threading.Lock()
-        self.datetime_now = datetime.datetime.now(self._timezone)
-        self.alarm_active = False  # activate alarm
-        self._alarm = datetime.datetime.now(self._timezone).replace(hour=8,
-                                                                    minute=0)
 
-    def get_current_datetime(self):
-        return self.datetime_now
+        self._datetime_now = datetime.datetime.now(self._timezone)
+        self.datetime_lock = threading.Lock()
+
+        self.alarm_active = False  # activate alarm
+        self.alarm_active_lock = threading.Lock()
+
+        self._alarm_datetime = datetime.datetime.now(self._timezone).\
+            replace(hour=8, minute=0)
+        self.alarm_lock = threading.Lock()
+
+    @property
+    def datetime_now(self):
+        with self.datetime_lock:
+            datetime_now = self._datetime_now
+        return datetime_now
+
+    @datetime_now.setter
+    def datetime_now(self, datetime_now):
+        with self.datetime_lock:
+            self._datetime_now = datetime_now
 
     # return time in a feasible manner
     def get_time_str(self):
-        hour = self.datetime_now.hour
-        minute = self.datetime_now.minute
+        time_now = self.datetime_now  # thread safe call of datetime_now
+        hour = time_now.hour
+        minute = time_now.minute
         time_str = "{}{}{}{}".format(str(int(hour/10)), str(hour % 10), 
                                      str(int(minute/10)), str(minute % 10))
         return time_str
@@ -43,9 +59,37 @@ class ClockTread(threading.Thread):
             self._timezone = pytz.timezone(zone)
 
 
-# TODO set alarm
+    @property
+    def alarm_datetime(self):
+        with self.alarm_lock:
+            alarm_time = self._alarm_datetime
+        return alarm_time
 
-# TODO get alarm
+    @alarm_datetime.setter
+    def alarm_datetime(self, datetime_ins):
+        # TODO change assert to log entry and return
+        assert isinstance(datetime_ins, datetime.datetime), \
+            "Datetime has wrong format"
+        with self.alarm_lock:
+            self._alarm_datetime = datetime_ins
+
+    def set_alarm(self, minute, hour, day=None, month=None, year=None):
+
+        assert 0 <= minute < 60
+        assert 0 <= hour < 60
+        # TODO find a way to call the setter of alarm_datetime
+        with self.alarm_lock:
+            alarm = self._alarm_datetime
+            alarm = alarm.replace(minute=minute, hour=hour)
+            if day is not None:
+                alarm = alarm.replace(day=day)
+            if month is not None:
+                alarm = alarm.replace(month=month)
+            if year is not None:
+                alarm = alarm.replace(year=year)
+            self._alarm_datetime = alarm
+
+
 
     # stop the thread execution, time will not be updated any longer
     def stop(self):
@@ -54,19 +98,26 @@ class ClockTread(threading.Thread):
     # count clock
     def run(self):
         while not self._stopping:
-            with self.timezone_lock:
-                self.datetime_now = datetime.datetime.now(self._timezone)
-                print self.get_time_str()
-                # print self.datetime_now
-                time.sleep(1)
+            # access class variables via properties in order to ensure
+            # thread safety
+            self.datetime_now = datetime.datetime.now(self.timezone)
+            print self.get_time_str()
+            # print self.datetime_now
+            time.sleep(1)
 
 
 if __name__ == '__main__':
     clock = ClockTread()
     clock.start()
-    time.sleep(1)
+    # time.sleep(1)
     clock.timezone = "Europe/London"
     time.sleep(1)
+    clock.timezone = "Europe/Amsterdam"
+    time.sleep(1)
+    clock.timezone = "US/Eastern"
+    time.sleep(1)
+    clock.set_alarm(10, 23)
+    print clock.alarm_datetime
     # print clock.get_current_datetime()
     # print clock.get_time_str()
     #time.sleep(10)
