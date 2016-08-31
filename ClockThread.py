@@ -20,11 +20,11 @@ class ClockTread(threading.Thread):
         self._datetime_now = datetime.datetime.now(self._timezone)
         self.datetime_lock = threading.Lock()
 
-        self.alarm_active = False  # activate alarm
+        self._alarm_active = False  # activate alarm
         self.alarm_active_lock = threading.Lock()
 
         self._alarm_datetime = datetime.datetime.now(self._timezone).\
-            replace(hour=8, minute=0)
+            replace(hour=10, minute=0, second=0, microsecond=0)
         self.alarm_lock = threading.Lock()
 
     @property
@@ -58,7 +58,6 @@ class ClockTread(threading.Thread):
         with self.timezone_lock:
             self._timezone = pytz.timezone(zone)
 
-
     @property
     def alarm_datetime(self):
         with self.alarm_lock:
@@ -73,23 +72,44 @@ class ClockTread(threading.Thread):
         with self.alarm_lock:
             self._alarm_datetime = datetime_ins
 
-    def set_alarm(self, minute, hour, day=None, month=None, year=None):
+    def set_alarm(self, hour, minute, day=None, month=None, year=None):
 
         assert 0 <= minute < 60
         assert 0 <= hour < 60
         # TODO find a way to call the setter of alarm_datetime
-        with self.alarm_lock:
+        # TODO incorporate timezone
+        with self.alarm_lock and self.alarm_active_lock:
             alarm = self._alarm_datetime
             alarm = alarm.replace(minute=minute, hour=hour)
-            if day is not None:
-                alarm = alarm.replace(day=day)
+
             if month is not None:
                 alarm = alarm.replace(month=month)
             if year is not None:
                 alarm = alarm.replace(year=year)
+            if day is not None:
+                alarm = alarm.replace(day=day)
+            elif alarm < self._alarm_datetime:
+                # set alarm to next morning
+                # TODO only works when alarm is regulary set
+                tomorrow = datetime.date.today()+datetime.timedelta(days=1)
+                alarm = alarm.replace(year=tomorrow.year,
+                                      month=tomorrow.month, day=tomorrow.day)
             self._alarm_datetime = alarm
+            # activate alarm, because if you set it, you want to have it
+            # going off, believe me
+            self._alarm_active = True
 
+    @property
+    def alarm_active(self):
+        with self.alarm_active_lock:
+            active = self._alarm_active
+        return active
 
+    @alarm_active.setter
+    def alarm_active(self, active):
+        assert isinstance(active, bool), "active needs be of type bool"
+        with self.alarm_active_lock:
+            self._alarm_active = active
 
     # stop the thread execution, time will not be updated any longer
     def stop(self):
@@ -102,11 +122,14 @@ class ClockTread(threading.Thread):
             # thread safety
             self.datetime_now = datetime.datetime.now(self.timezone)
             print self.get_time_str()
+            if self.alarm_active and self.datetime_now > self.alarm_datetime:
+                print "ALARM"
             # print self.datetime_now
             time.sleep(1)
 
 
 if __name__ == '__main__':
+    # ClockTread Testbench
     clock = ClockTread()
     clock.start()
     # time.sleep(1)
@@ -116,11 +139,13 @@ if __name__ == '__main__':
     time.sleep(1)
     clock.timezone = "US/Eastern"
     time.sleep(1)
-    clock.set_alarm(10, 23)
+    clock.timezone = "Europe/Berlin"
+    clock.set_alarm(22,38)
+    time.sleep(60)
     print clock.alarm_datetime
     # print clock.get_current_datetime()
     # print clock.get_time_str()
-    #time.sleep(10)
+    # time.sleep(10)
     print "Stopping clock"
     clock.stop()
     print "Waiting for clock to terminate"
