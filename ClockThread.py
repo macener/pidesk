@@ -6,11 +6,11 @@ import datetime
 import pytz
 
 
-class ClockTread(threading.Thread):
+class ClockThread(threading.Thread):
 
     def __init__(self, tz="Europe/Berlin"):
         # threading.Thread.__init__(self, name="Clock")
-        super(ClockTread, self).__init__(name="Clock")
+        super(ClockThread, self).__init__(name="Clock")
         self._stopping = False
         self._play_alarm = False  # currently playing an alarm
 
@@ -137,11 +137,11 @@ class ClockTread(threading.Thread):
             # access class variables via properties in order to ensure
             # thread safety
             self.datetime_now = datetime.datetime.now(self.timezone)
-            print self.get_time_str()
+            # print self.get_time_str()
             if self.alarm_set and self.datetime_now > self.alarm_datetime:
                 self.alarm_activated = True
             # print self.datetime_now
-            print self.alarm_activated
+            # print self.alarm_activated
             time.sleep(1)
 
 
