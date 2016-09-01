@@ -22,7 +22,7 @@ import pytz
 import threading
 import ClockThread
 import Wiring
-# import AlarmThread
+import AlarmThread
 
 class pidesk:
     def __init__(self):
@@ -37,14 +37,16 @@ class pidesk:
         log.debug("Loading clock")
         clock = ClockThread.ClockThread()
         display = Wiring.DisplayThread(clock)
+        alarm = AlarmThread.AlarmThread(clock)
         #clock.setDaemon(True)
         #alarm = AlarmThread.AlarmThread()
 
         log.debug("Starting clock")
         clock.start()
         display.start()
-        #alarm.start()
-        #alarm.setAlarm('TODO')
+        alarm.start()
+
+        clock.set_alarm(22,20)
 
         # Main loop where we just spin until we receive a shutdown request
         try:
@@ -61,6 +63,7 @@ class pidesk:
 
         clock.stop()
         display.stop()
+        alarm.stop()
 
         log.info("Shutdown complete, now exiting")
 

@@ -6,11 +6,11 @@ import datetime
 import pytz
 
 
-class ClockTread(threading.Thread):
+class ClockThread(threading.Thread):
 
     def __init__(self, tz="Europe/Berlin"):
         # threading.Thread.__init__(self, name="Clock")
-        super(ClockTread, self).__init__(name="Clock")
+        super(ClockThread, self).__init__(name="Clock")
         self._stopping = False
         self._play_alarm = False  # currently playing an alarm
 
