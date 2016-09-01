@@ -1,11 +1,8 @@
 # A file where all the "wiring" is done, i.e. all the hardware related stuff.
 # Kind of a hardware abstraction layer (HAL).
 import time
-import datetime
-import pytz
 import threading
 from Adafruit_LED_Backpack import SevenSegment
-import ClockThread
 
 
 class DisplayThread(threading.Thread):
@@ -29,7 +26,7 @@ class DisplayThread(threading.Thread):
             self.segment.clear()
             self.segment.print_number_str(self.clock.get_time_str())
 
-            # bliking colon
+            # blinking colon
             if self.colon:
                 self.segment.set_colon(True)
                 self.colon = False
