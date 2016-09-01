@@ -20,8 +20,11 @@ class ClockTread(threading.Thread):
         self._datetime_now = datetime.datetime.now(self._timezone)
         self.datetime_lock = threading.Lock()
 
-        self._alarm_active = False  # activate alarm
-        self.alarm_active_lock = threading.Lock()
+        self._alarm_set = False  # activate alarm
+        self.alarm_set_lock = threading.Lock()
+
+        self._alarm_activated = False
+        self.alarm_activated_lock = threading.Lock()
 
         self._alarm_datetime = datetime.datetime.now(self._timezone).\
             replace(hour=10, minute=0, second=0, microsecond=0)
@@ -78,7 +81,7 @@ class ClockTread(threading.Thread):
         assert 0 <= hour < 60
         # TODO find a way to call the setter of alarm_datetime
         # TODO incorporate timezone
-        with self.alarm_lock and self.alarm_active_lock:
+        with self.alarm_lock and self.alarm_set_lock:
             alarm = self._alarm_datetime
             alarm = alarm.replace(minute=minute, hour=hour)
 
@@ -97,19 +100,32 @@ class ClockTread(threading.Thread):
             self._alarm_datetime = alarm
             # activate alarm, because if you set it, you want to have it
             # going off, believe me
-            self._alarm_active = True
+            self._alarm_set = True
 
     @property
-    def alarm_active(self):
-        with self.alarm_active_lock:
-            active = self._alarm_active
+    def alarm_set(self):
+        with self.alarm_set_lock:
+            set = self._alarm_set
+        return set
+
+    @alarm_set.setter
+    def alarm_set(self, set):
+        assert isinstance(set, bool), "set needs be of type bool"
+        with self.alarm_set_lock:
+            self._alarm_set = set
+
+    @property
+    def alarm_activated(self):
+        with self.alarm_activated_lock:
+            active = self._alarm_activated
         return active
 
-    @alarm_active.setter
-    def alarm_active(self, active):
+    @alarm_activated.setter
+    def alarm_activated(self, active):
         assert isinstance(active, bool), "active needs be of type bool"
-        with self.alarm_active_lock:
-            self._alarm_active = active
+        with self.alarm_activated_lock:
+            self._alarm_activated = active
+
 
     # stop the thread execution, time will not be updated any longer
     def stop(self):
@@ -122,9 +138,10 @@ class ClockTread(threading.Thread):
             # thread safety
             self.datetime_now = datetime.datetime.now(self.timezone)
             print self.get_time_str()
-            if self.alarm_active and self.datetime_now > self.alarm_datetime:
-                print "ALARM"
+            if self.alarm_set and self.datetime_now > self.alarm_datetime:
+                self.alarm_activated = True
             # print self.datetime_now
+            print self.alarm_activated
             time.sleep(1)
 
 
@@ -140,8 +157,8 @@ if __name__ == '__main__':
     clock.timezone = "US/Eastern"
     time.sleep(1)
     clock.timezone = "Europe/Berlin"
-    clock.set_alarm(22,38)
-    time.sleep(60)
+    clock.set_alarm(21,42)
+    time.sleep(45)
     print clock.alarm_datetime
     # print clock.get_current_datetime()
     # print clock.get_time_str()

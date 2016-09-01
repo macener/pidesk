@@ -1,10 +1,40 @@
 # A file where all the "wiring" is done, i.e. all the hardware related stuff.
 # Kind of a hardware abstraction layer (HAL).
+import time
+import datetime
+import pytz
+import threading
+from Adafruit_LED_Backpack import SevenSegment
+import ClockThread
 
 
-class Display(object):
+class DisplayThread(threading.Thread):
+    def __init__(self, clock):
+        super(DisplayThread, self).__init__(name="Display")
+        self.segment = SevenSegment.SevenSegment(address=0x70, busnum=1)
+        self.stopping = False
+        self.segment.begin()
+        self.segment.set_brightness(3)
+        self.colon = True
+        self.clock = clock
 
-    def __init__(self, name, hardware):
-        self.name = name
+    def stop(self):
+        self.segment.clear()
+        self.segment.write_display()
+        self.stopping = True
 
+    def run(self):
+        while not self.stopping:
 
+            self.segment.clear()
+            self.segment.print_number_str(self.clock.get_time_str())
+
+            # bliking colon
+            if self.colon:
+                self.segment.set_colon(True)
+                self.colon = False
+            else:
+                self.colon = True
+
+            self.segment.write_display()
+            time.sleep(1)
