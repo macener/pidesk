@@ -1,9 +1,13 @@
-
+"""
+main entry for pidesk
+takes some inspiration from mattdy's alarmpi
+"""
 import logging
 import sys
-
-if "/home/pi/py_ws/Adafruit_Python_LED_Backpack" not in sys.path:
-    sys.path.append("/home/pi/py_ws/Adafruit_Python_LED_Backpack")
+import time
+import ClockThread
+import Wiring
+import AlarmThread
 
 log = logging.getLogger('root')
 log.setLevel(logging.DEBUG)
@@ -11,58 +15,57 @@ log.setLevel(logging.DEBUG)
 stream = logging.StreamHandler(sys.stdout)
 stream.setLevel(logging.DEBUG)
 
-formatter = logging.Formatter('[%(asctime)s] %(levelname)8s %(module)15s: %(message)s')
+formatter = logging.Formatter(
+    '[%(asctime)s] %(levelname)8s %(module)15s: %(message)s')
 stream.setFormatter(formatter)
 
 log.addHandler(stream)
 
-import time
-import datetime
-import pytz
-import threading
-import ClockThread_old as ClockThread
-import AlarmThread
 
-	
-class pidesk:
-   def __init__(self):
-      self.stopping = False
+class piDesk:
+    def __init__(self):
+        self.stopping = False
 
-   def stop(self):
-      self.stopping = True
+    def stop(self):
+        self.stopping = True
 
-   def run(self):
-      log.info("Starting up AlarmPi")
+    def run(self):
+        log.info("Starting pidesk")
 
-      log.debug("Loading clock")
-      clock = ClockThread.ClockThread()
-      #clock.setDaemon(True)
-      alarm = AlarmThread.AlarmThread()
+        log.debug("Loading clock")
+        clock = ClockThread.ClockThread()
+        display = Wiring.DisplayThread(clock)
+        alarm = AlarmThread.AlarmThread(clock)
 
-      log.debug("Starting clock")
-      clock.start()
-      alarm.start()
-      alarm.setAlarm('TODO')
+        log.debug("Starting clock")
+        clock.start()
+        display.start()
+        alarm.start()
 
-      # Main loop where we just spin until we receive a shutdown request
-      try:
-         while(self.stopping is False):
-            time.sleep(1)
-      except (KeyboardInterrupt, SystemExit):
-         log.warn("Interrupted, shutting down")
+        clock.set_alarm(22,20)
 
-      log.warn("Shutting down")
-      #media.playVoice('Shutting down. Goodbye')
-      time.sleep(2)
+        # Main loop where we just spin until we receive a shutdown request
+        try:
+            while self.stopping is False:
+                time.sleep(1)
+        except (KeyboardInterrupt, SystemExit):
+            log.warn("Interrupted, shutting down")
 
-      log.info("Stopping all services")
+        log.warn("Shutting down")
+        time.sleep(2)
 
-      clock.stop()
-      alarm.stop()
+        log.info("Stopping all services")
 
-      log.info("Shutdown complete, now exiting")
+        clock.stop()
+        display.stop()
+        alarm.stop()
 
-      time.sleep(2) # To give threads time to shut down
+        # wait unitl threads have terminated
+        clock.join()
+        display.join()
+        alarm.join()
 
-desk = pidesk()
+        log.info("Shutdown complete, now exiting")
+
+desk = piDesk()
 desk.run()
