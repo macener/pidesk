@@ -1,9 +1,10 @@
-#ClockThread
+"""
+TODO AlarmThread should not be the media handler
+"""
 
 import time
 import threading
 import os
-from pygame import mixer
 
 
 class AlarmThread(threading.Thread):

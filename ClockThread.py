@@ -9,7 +9,6 @@ import pytz
 class ClockThread(threading.Thread):
 
     def __init__(self, tz="Europe/Berlin"):
-        # threading.Thread.__init__(self, name="Clock")
         super(ClockThread, self).__init__(name="Clock")
         self._stopping = False
         self._play_alarm = False  # currently playing an alarm
@@ -79,8 +78,6 @@ class ClockThread(threading.Thread):
 
         assert 0 <= minute < 60
         assert 0 <= hour < 60
-        # TODO find a way to call the setter of alarm_datetime
-        # TODO incorporate timezone
         with self.alarm_lock and self.alarm_set_lock:
             alarm = self._alarm_datetime
             alarm = alarm.replace(minute=minute, hour=hour)
@@ -93,7 +90,6 @@ class ClockThread(threading.Thread):
                 alarm = alarm.replace(day=day)
             elif alarm < self._alarm_datetime:
                 # set alarm to next morning
-                # TODO only works when alarm is regulary set
                 tomorrow = datetime.date.today()+datetime.timedelta(days=1)
                 alarm = alarm.replace(year=tomorrow.year,
                                       month=tomorrow.month, day=tomorrow.day)
