@@ -38,6 +38,6 @@ class AlarmThread(threading.Thread):
     def run(self):
         while not self.stopping:
             if self.clock.alarm_activated and not self.playing_alarm:
-                self.playAlarm()
+                self.play_alarm()
             time.sleep(1)
 

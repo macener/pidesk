@@ -11,7 +11,7 @@ class DisplayThread(threading.Thread):
         self.segment = SevenSegment.SevenSegment(address=0x70, busnum=1)
         self.stopping = False
         self.segment.begin()
-        self.segment.set_brightness(3)
+        self.segment.set_brightness(1)
         self.colon = True
         self.clock = clock
 

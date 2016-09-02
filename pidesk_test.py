@@ -46,7 +46,7 @@ class pidesk:
         display.start()
         alarm.start()
 
-        clock.set_alarm(22,20)
+        clock.set_alarm(7,0,day=2)
 
         # Main loop where we just spin until we receive a shutdown request
         try:
