@@ -2,6 +2,9 @@
 # Kind of a hardware abstraction layer (HAL).
 import time
 import threading
+import sys
+if "/home/pi/py_ws/Adafruit_Python_LED_Backpack" not in sys.path:
+    sys.path.append("/home/pi/py_ws/Adafruit_Python_LED_Backpack")
 from Adafruit_LED_Backpack import SevenSegment
 
 
