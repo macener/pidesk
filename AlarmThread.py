@@ -25,7 +25,7 @@ class AlarmThread(threading.Thread):
         self.playing_alarm = True
 
         #self.playing_alarm = False
-        play = os.system("mpc play 1")
+        play = os.system("mpc play 2")
         print play
         #if not play:
         #    mixer.init()

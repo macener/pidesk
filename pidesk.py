@@ -42,7 +42,7 @@ class piDesk:
         display.start()
         alarm.start()
 
-        clock.set_alarm(22,20)
+        clock.set_alarm(21,31)
 
         # Main loop where we just spin until we receive a shutdown request
         try:
